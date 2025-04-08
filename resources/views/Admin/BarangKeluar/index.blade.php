@@ -47,49 +47,56 @@
     </div>
 
     <div class="relative overflow-x-auto mt-6 min-h-[550px]">
-        @foreach ($pagedTanggal as $tanggal)
-            <div class="mb-6">
-                <h2 class="text-lg font-semibold text-blue-600 mb-2">Tanggal Keluar: {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }}</h2>
-
-                <table class="w-full table-auto bg-white shadow-md rounded-lg text-sm">
-                    <thead class="bg-[#5CB8E4] text-white text-[13px]">
-                        <tr>
-                            <th class="px-3 py-2 text-left">No</th>
-                            <th class="px-3 py-2 text-left">Nama Barang</th>
-                            <th class="px-3 py-2 text-left">Penerima</th>
-                            <th class="px-3 py-2 text-left">Keterangan</th>
-                            <th class="px-3 py-2 text-left">Jumlah</th>
-                            <th class="px-3 py-2 text-left">Supplier</th>
-                            <th class="px-3 py-2 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-[16px]">
-                        @foreach ($barangKeluars[$tanggal] as $index => $barang_keluar)
-                            <tr class="border-t hover:bg-[#f9f9f9]">
-                                <td class="px-3 py-2">{{ $index + 1 }}</td>
-                                <td class="px-3 py-2">{{ $barang_keluar->barang->name_barang }}</td>
-                                <td class="px-3 py-2">{{ $barang_keluar->penerima }}</td>
-                                <td class="px-3 py-2 text-[13px]">{{ $barang_keluar->keterangan }}</td>
-                                <td class="px-3 py-2">{{ $barang_keluar->jumlah }}</td>
-                                <td class="px-3 py-2">{{ $barang_keluar->supplier->name_supplier ?? '-' }}</td>
-                                <td class="px-3 py-2 text-center flex justify-center gap-2">
-                                    <a href="{{ route('barang_keluar.edit', $barang_keluar->id) }}" class="bg-[#5CB8E4] hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition">
-                                        Update
-                                    </a>
-                                    <form action="{{ route('barang_keluar.destroy', $barang_keluar->id) }}" method="post">
-                                        @csrf
-                                        @method('delete')
-                                        <button type="submit" class="bg-red-500 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition">
-                                            Delete
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        @if(count($pagedTanggal) === 0 || count($barangKeluars) === 0)
+            <div class="text-center text-gray-500 py-10 bg-white rounded-lg shadow">
+                <p class="text-lg font-semibold">Daftar Barang Keluar Belum Ada</p>
+                <p class="text-sm">Silakan tambahkan data terlebih dahulu.</p>
             </div>
-        @endforeach
+        @else
+            @foreach ($pagedTanggal as $tanggal)
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold text-blue-600 mb-2">Tanggal Keluar: {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }}</h2>
+    
+                    <table class="w-full table-auto bg-white shadow-md rounded-lg text-sm">
+                        <thead class="bg-[#5CB8E4] text-white text-[13px]">
+                            <tr>
+                                <th class="px-3 py-2 text-left">No</th>
+                                <th class="px-3 py-2 text-left">Nama Barang</th>
+                                <th class="px-3 py-2 text-left">Penerima</th>
+                                <th class="px-3 py-2 text-left">Keterangan</th>
+                                <th class="px-3 py-2 text-left">Jumlah</th>
+                                <th class="px-3 py-2 text-left">Supplier</th>
+                                <th class="px-3 py-2 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-[16px]">
+                            @foreach ($barangKeluars[$tanggal] as $index => $barang_keluar)
+                                <tr class="border-t hover:bg-[#f9f9f9]">
+                                    <td class="px-3 py-2">{{ $index + 1 }}</td>
+                                    <td class="px-3 py-2">{{ $barang_keluar->barang->name_barang }}</td>
+                                    <td class="px-3 py-2">{{ $barang_keluar->penerima }}</td>
+                                    <td class="px-3 py-2 text-[13px]">{{ $barang_keluar->keterangan }}</td>
+                                    <td class="px-3 py-2">{{ $barang_keluar->jumlah }}</td>
+                                    <td class="px-3 py-2">{{ $barang_keluar->supplier->name_supplier ?? '-' }}</td>
+                                    <td class="px-3 py-2 text-center flex justify-center gap-2">
+                                        <a href="{{ route('barang_keluar.edit', $barang_keluar->id) }}" class="bg-[#5CB8E4] hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition">
+                                            Update
+                                        </a>
+                                        <form action="{{ route('barang_keluar.destroy', $barang_keluar->id) }}" method="post">
+                                            @csrf
+                                            @method('delete')
+                                            <button type="submit" class="bg-red-500 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endforeach
+        @endif
     </div>
 
     <div class="mt-4">

@@ -89,7 +89,6 @@
                                 @endif
                             </td>
                             
-                            
                             <td class="px-4 py-2">{{ $barang->kondisi }}</td>
                             <td class="px-4 py-2">
                                 @if (!$barang->deskripsi)

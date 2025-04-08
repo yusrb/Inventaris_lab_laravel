@@ -20,7 +20,16 @@ class DatabaseSeeder extends Seeder
             'name' => 'Yusar Brian Sadella',
             'username' => 'yusrb',
             'email' => 'byrn.uiy@gmail.com',
+            'role' => 0,
             'password' => Hash::make('admin'),
+        ]);
+
+        DB::table('users')->insert([
+            'name' => 'Bobon Hernandes',
+            'username' => 'bobon',
+            'email' => 'bobon@gmail.com',
+            'role' => 1,
+            'password' => Hash::make('petugas'),
         ]);
 
         // SEEDER SETTINGS

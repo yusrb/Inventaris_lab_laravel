@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Settings;
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
+use App\Helpers\LogAktivitasHelper;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -25,6 +27,12 @@ class UserController extends Controller
                 $q->where('username', 'LIKE', "%$search%")
                   ->orWhere('name', 'LIKE', "%$search%")
                   ->orWhere('email', 'LIKE', "%$search%");
+                  
+                  if (strtolower($search) === 'admin') {
+                      $q->orWhere('role', 0);
+                  } elseif (strtolower($search) === 'petugas') {
+                      $q->orWhere('role', 1);
+                  }
             });
         }
     
@@ -62,6 +70,7 @@ class UserController extends Controller
             'username' => ['required', 'max:30'],
             'email' => ['required', 'email'],
             'password' => ['required'],
+            'role' => ['required', 'in:0,1'],
         ], [
             'name.required' => 'Nama Harus Diisi!',
             'name.max' => 'Maksimal kata Nama 40 karakter!',
@@ -69,15 +78,20 @@ class UserController extends Controller
             'username.max' => 'Maksimal kata Username 30 karakter!',
             'email.required' => 'Email Harus Diisi!',
             'password.required' => 'Password Harus Diisi!',
+            'role.required' => 'Role Harus Dipilih!',
         ]);
-
-        User::create([
+    
+        $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
         ]);
 
+        // Catat log aktivitas create user
+        LogAktivitasHelper::catat('Create', 'User', 'Menambahkan user baru: ' . $user->name);
+    
         return redirect()->route('user.index')->with('success', 'User Berhasil Ditambahkan!');
     }
 
@@ -86,7 +100,23 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        
+        $user = User::findOrFail($id);
+
+        $logs = LogAktivitas::where('user_id', $user->id)
+            ->latest()
+            ->paginate(10);
+    
+        $settings = Settings::first();
+        $page = "Riwayat Aktivitas $user->name";
+    
+        $context = [
+            'settings' => $settings,
+            'page' => $page,
+            'user' => $user,
+            'logs' => $logs,
+        ];
+    
+        return view('admin.users.riwayat', $context);
     }
 
     /**
@@ -110,7 +140,6 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-
     public function update(Request $request, string $id)
     {
         $request->validate([
@@ -118,20 +147,23 @@ class UserController extends Controller
             'username' => ['required', 'max:30'],
             'email' => ['required', 'email'],
             'password' => ['nullable', 'min:6'],
+            'role' => ['required', 'in:0,1'],
         ], [
             'name.required' => 'Nama Harus Diisi!',
             'name.max' => 'Maksimal kata Nama 40 karakter!',
             'username.required' => 'Username Harus Diisi!',
             'username.max' => 'Maksimal kata Username 30 karakter!',
             'email.required' => 'Email Harus Diisi!',
-            'password.required' => 'Password Harus Diisi!',
+            'role.required' => 'Role Harus Dipilih!',
         ]);
-
+    
         $user = User::findOrFail($id);
+        $namaLama = $user->name;
 
         $user->name = $request->name;
         $user->username = $request->username;
         $user->email = $request->email;
+        $user->role = $request->role;
 
         if ($request->password) {
             $user->password = Hash::make($request->password);
@@ -139,6 +171,9 @@ class UserController extends Controller
 
         $user->save();
 
+        // Catat log aktivitas update user
+        LogAktivitasHelper::catat('Update', 'User', 'Mengubah user dari nama "' . $namaLama . '" menjadi "' . $user->name . '"');
+    
         return redirect()->route('user.index')->with('update', 'User Berhasil Diperbarui!');
     }
 
@@ -147,8 +182,18 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        User::destroy($id);
+        $user = User::find($id);
 
-        return redirect()->route('user.index')->with('delete', 'User berhasil Di Delete!');
+        if ($user) {
+            $nama = $user->name;
+            $user->delete();
+
+            // Catat log aktivitas delete user
+            LogAktivitasHelper::catat('Delete', 'User', 'Menghapus user: ' . $nama);
+
+            return redirect()->route('user.index')->with('delete', 'User berhasil Di Delete!');
+        }
+
+        return redirect()->route('user.index')->with('error', 'User tidak ditemukan!');
     }
 }

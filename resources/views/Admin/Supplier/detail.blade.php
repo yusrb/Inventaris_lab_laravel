@@ -63,7 +63,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-gray-500 italic">Tidak ada {{ strtolower($settings->name_website) }}</td>
+                                <td colspan="5" class="text-center py-4 text-gray-500 italic">
+                                    Tidak ada {{ strtolower('Barang di ' . $supplier->name_supplier) }}
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>

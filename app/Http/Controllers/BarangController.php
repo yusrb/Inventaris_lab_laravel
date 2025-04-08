@@ -6,6 +6,8 @@ use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Settings;
 use Illuminate\Http\Request;
+use App\Helpers\LogAktivitasHelper;
+use Illuminate\Support\Facades\Auth;
 
 class BarangController extends Controller
 {
@@ -52,7 +54,6 @@ class BarangController extends Controller
         $context = [
             'settings' => $settings,
             'page' => $page,
-
             'kategoris' => $all_kategori
         ];
 
@@ -86,7 +87,7 @@ class BarangController extends Controller
             'stok_minimum.integer' => 'Stok Minimum Harus Berupa Angka!',
         ]);
 
-        Barang::create([
+        $barang = Barang::create([
             'kode_barang' => $request->kode_barang,
             'name_barang' => $request->name_barang,
             'kategori_id' => $request->kategori_id,
@@ -95,6 +96,8 @@ class BarangController extends Controller
             'stok_minimum' => $request->stok_minimum,
             'deskripsi' => $request->deskripsi,
         ]);
+
+        LogAktivitasHelper::catat('create', 'Barang', 'User ' . Auth::user()->username . ' menambahkan Barang ' . $barang->name_barang);
 
         return redirect()->route('barang.index')->with('success', 'Barang Berhasil Ditambahkan!');
     }
@@ -121,7 +124,6 @@ class BarangController extends Controller
         $context = [
             'settings' => $settings,
             'page' => $page,
-
             'barang' => $get_barang,
             'kategoris' => $all_kategori,
         ];
@@ -135,7 +137,8 @@ class BarangController extends Controller
     public function update(Request $request, string $id)
     {
         $barang = Barang::findOrFail($id);
-
+        $old_name = $barang->name_barang;
+    
         $request->validate([
             'kode_barang' => ['required'],
             'name_barang' => ['required'],
@@ -155,7 +158,7 @@ class BarangController extends Controller
             'stok_minimum.required' => 'Stok Minimum Harus Diisi!',
             'deskripsi.required' => 'Deskripsi Harus Diisi!',
         ]);
-
+    
         $barang->update([
             'kode_barang' => $request->kode_barang,
             'name_barang' => $request->name_barang,
@@ -165,16 +168,26 @@ class BarangController extends Controller
             'stok_minimum' => $request->stok_minimum,
             'deskripsi' => $request->deskripsi,
         ]);
-
+    
+        LogAktivitasHelper::catat(
+            'update',
+            'Barang',
+            'User ' . Auth::user()->username . ' mengupdate Barang dari "' . $old_name . '" menjadi "' . $barang->name_barang . '"'
+        );
+    
         return redirect()->route('barang.index')->with('update', 'Barang Berhasil Di Update!');
     }
-
+    
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        Barang::destroy($id);
+        $barang = Barang::findOrFail($id);
+
+        LogAktivitasHelper::catat('delete', 'Barang', 'User ' . Auth::user()->username . ' menghapus Barang ' . $barang->name_barang);
+
+        $barang->delete();
 
         return redirect()->route('barang.index')->with('delete', 'Barang berhasil Didelete!');
     }

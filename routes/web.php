@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Peminjam;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
@@ -14,13 +13,14 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\BarangMasukController;
 use App\Http\Controllers\BarangKeluarController;
+use App\Http\Controllers\LogAktivitasController;
 
 // Auth Route Start
 Route::get('/login', [AuthController::class, 'login_view'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.login');
 
-Route::get('/register', [AuthController::class, 'register_view'])->name('register.index');
-Route::post('/register', [AuthController::class, 'register'])->name('register.register');
+// Route::get('/register', [AuthController::class, 'register_view'])->name('register.index');
+// Route::post('/register', [AuthController::class, 'register'])->name('register.register');
 
 Route::get('logout', [AuthController::class, 'logout_success_view'])->name('logout_success.index');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout.logout');
@@ -28,25 +28,13 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout.logout')
 // Auth Route End
 
 
-// Admin Route Start
+// Route All Role Start
 
 Route::middleware(['auth'])->group(function() {
     Route::get('/', [DashboardController::class, 'index']);
 
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
-
-    // Settings
-    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::put('settings/{id}', [SettingsController::class, 'update'])->name('settings.update');
-
-    // Users
-    Route::get('users', [UserController::class, 'index'])->name('user.index');
-    Route::get('users/create', [UserController::class, 'create'])->name('user.create');
-    Route::post('users/create', [UserController::class, 'store'])->name('user.store');
-    Route::get('users/update/{id}', [UserController::class, 'edit'])->name('user.edit');
-    Route::put('users/update/{id}', [UserController::class, 'update'])->name('user.update');
-    Route::delete('users/delete/{id}', [UserController::class, 'destroy'])->name('user.destroy');
 
     // Peminjam
     Route::get('peminjam/', [PeminjamController::class, 'index'])->name('peminjam.index');
@@ -122,6 +110,29 @@ Route::middleware(['auth'])->group(function() {
 
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPDF'])->name('laporan.export.pdf');
 });
 
-// Admin Route End
+// Routes All Role End
+
+// Routes Petugas Can't Not Start
+Route::middleware(['auth', 'checkRole:0'])->group(function () {
+    // Settings
+    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::put('settings/{id}', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Users
+    Route::get('users', [UserController::class, 'index'])->name('user.index');
+    Route::get('users/create', [UserController::class, 'create'])->name('user.create');
+    Route::post('users/create', [UserController::class, 'store'])->name('user.store');
+    Route::get('users/update/{id}', [UserController::class, 'edit'])->name('user.edit');
+    Route::put('users/update/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::delete('users/delete/{id}', [UserController::class, 'destroy'])->name('user.destroy');
+    Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
+    
+    // Log Aktivitas
+    Route::get('/log-aktivitas', [LogAktivitasController::class, 'index'])->name('log_aktivitas.index');
+    Route::delete('/log-aktivitas/clear', [LogAktivitasController::class, 'clear'])->name('log_aktivitas.clear');
+});
+
+// Routes Petugas Can't Not End

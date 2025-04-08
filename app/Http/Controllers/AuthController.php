@@ -13,8 +13,10 @@ class AuthController extends Controller
     public function login_view()
     {
         $settings = Settings::where('id', 1)->first();
+        $userAdmin = User::where('role', 'admin')->get();
         $context = [
             'settings' => $settings,
+            'usersAdmin' => $userAdmin,
         ];
         return view('auth.login', $context);
     }

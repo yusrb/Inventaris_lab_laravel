@@ -37,6 +37,22 @@
             </div>
 
             <div class="mb-4">
+                <label for="role" class="block text-gray-700 font-semibold">Role</label>
+                <select name="role" id="role" class="w-full p-3 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5CB8E4]">
+                    <option value="">-- Pilih Role --</option>
+                        <option value="0" {{ old('role') }}>
+                            Admin
+                        </option>
+                        <option value="1" {{ old('role') }}>
+                            Petugas
+                        </option>
+                </select>
+                @error('role')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="mb-4">
                 <label for="password" class="block text-gray-700 font-semibold">Password</label>
                 <input type="password" name="password" value="{{ old('password') }}" id="password" class="w-full p-3 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5CB8E4]">
                 @error('password')

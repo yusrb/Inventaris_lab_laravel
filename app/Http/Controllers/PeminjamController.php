@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\LogAktivitasHelper;
 use App\Models\Barang;
 use App\Models\Peminjam;
 use App\Models\Settings;
@@ -10,9 +11,6 @@ use Illuminate\Http\Request;
 
 class PeminjamController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $settings = Settings::where('id', 1)->first();
@@ -24,7 +22,10 @@ class PeminjamController extends Controller
             $search = $request->input('peminjam_search');
             $query->where(function ($q) use ($search) {
                 $q->where('name_peminjam', 'LIKE', "%$search%")
-                  ->orWhere('kontak_peminjam', 'LIKE', "%$search%");
+                  ->orWhere('kontak_peminjam', 'LIKE', "%$search%")
+                  ->orWhere('id', 'LIKE', "%$search%")
+                  ->orWhere('created_at', 'LIKE', "%$search%")
+                  ->orWhere('updated_at', 'LIKE', "%$search%");
             });
         }
 
@@ -37,10 +38,7 @@ class PeminjamController extends Controller
             'search' => $request->input('peminjam_search')
         ]);
     }
-    
-    /**
-     * Show the form for creating a new resource.
-     */
+
     public function create()
     {
         $settings = Settings::first();
@@ -54,9 +52,6 @@ class PeminjamController extends Controller
         return view('Admin.Peminjam.create', data: $context);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -68,25 +63,21 @@ class PeminjamController extends Controller
             'kontak_peminjam.max' => 'Kontak Maksimal 12 karakter',
         ]);
 
-        Peminjam::create([
+        $peminjam = Peminjam::create([
             'name_peminjam' => $request->name_peminjam,
             'kontak_peminjam' => $request->kontak_peminjam,
         ]);
 
+        LogAktivitasHelper::catat('Create', 'Peminjam', 'Menambahkan peminjam baru: ' . $peminjam->name_peminjam);
+
         return redirect()->route('peminjam.index')->with('success', 'Berhasil Menambahkan Peminjam.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Peminjam $peminjam)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         $settings = Settings::first();
@@ -103,9 +94,6 @@ class PeminjamController extends Controller
         return view('admin.peminjam.edit', $context);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $request->validate([
@@ -116,25 +104,33 @@ class PeminjamController extends Controller
             'kontak_peminjam.required' => 'Kontak Harus Diisi',
             'kontak_peminjam.max' => 'Kontak Maksimal 12 karakter',
         ]);
-
+    
         $get_peminjam = Peminjam::findOrFail($id);
-
+    
+        $nama_lama = $get_peminjam->name_peminjam;
+        $kontak_lama = $get_peminjam->kontak_peminjam;
+    
         $get_peminjam->name_peminjam = $request->name_peminjam;
         $get_peminjam->kontak_peminjam = $request->kontak_peminjam;
-
         $get_peminjam->save();
-
+    
+        LogAktivitasHelper::catat(
+            'Update',
+            'Peminjam',
+            "Memperbarui peminjam: nama dari '$nama_lama' ke '{$get_peminjam->name_peminjam}', kontak dari '$kontak_lama' ke '{$get_peminjam->kontak_peminjam}'"
+        );
+    
         return redirect()->route('peminjam.index')->with('update', 'Peminjam Berhasil Di Update.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $get_peminjam = Peminjam::findOrFail($id);
+        $nama = $get_peminjam->name_peminjam;
 
         $get_peminjam->delete();
+
+        LogAktivitasHelper::catat('Delete', 'Peminjam', 'Menghapus peminjam: ' . $nama);
 
         return redirect()->route('peminjam.index')->with('delete', 'Data Peminjam Berhasil Di Hapus.');
     }

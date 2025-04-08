@@ -8,12 +8,10 @@ use App\Models\Supplier;
 use App\Models\BarangMasuk;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Helpers\LogAktivitasHelper;
 
 class BarangMasukController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $settings = Settings::first();
@@ -39,7 +37,7 @@ class BarangMasukController extends Controller
 
         $paginatedBarangMasuks = collect($barangMasuks)
             ->only($paginatedTanggal->items());
-    
+
         $context = [
             'settings' => $settings,
             'title' => $title,
@@ -47,13 +45,10 @@ class BarangMasukController extends Controller
             'barang_masuks' => $paginatedBarangMasuks,
             'paginatedTanggal' => $paginatedTanggal,
         ];
-    
+
         return view('admin.barangmasuk.index', $context);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $settings = Settings::where('id', 1)->first();
@@ -74,19 +69,16 @@ class BarangMasukController extends Controller
         return view('admin.barangmasuk.create', $context);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $cart = session()->get('cart', []);
-        
+
         if (empty($cart)) {
             return redirect()->route('barang_masuk.create')->with('error', 'Keranjang masih kosong.');
         }
-    
+
         $barang_masuk_ids = [];
-    
+
         foreach ($cart as $item) {
             $barang_masuk = BarangMasuk::create([
                 'barang_id' => $item['barang_id'],
@@ -95,22 +87,25 @@ class BarangMasukController extends Controller
                 'tanggal_masuk' => $item['tanggal_masuk'],
                 'keterangan' => $item['keterangan'],
             ]);
-    
+
             $barang = Barang::find($item['barang_id']);
             $barang->update(['jumlah' => $barang->jumlah + $item['jumlah']]);
-    
+
             $barang_masuk_ids[] = $barang_masuk->id;
         }
-    
+
+        LogAktivitasHelper::catat(
+            'Create',
+            'Barang Masuk',
+            'Menambahkan barang masuk sebanyak ' . count($barang_masuk_ids) . ' item.'
+        );
+
         session()->forget('cart');
-    
+
         return redirect()->route('barang_masuk.show', ['ids' => implode(',', $barang_masuk_ids)])
                          ->with('success', 'Semua barang berhasil masuk.');
     }
-    
-    /**
-     * Display the specified resource.
-     */
+
     public function show($ids)
     {
         $settings = Settings::first();
@@ -130,10 +125,7 @@ class BarangMasukController extends Controller
 
         return view('admin.barangmasuk.detail', $context);
     }
-    
-    /**
-     * Show the form for editing the specified resource.
-     */
+
     public function edit(string $id)
     {
         $settings = Settings::where('id', 1)->first();
@@ -155,36 +147,25 @@ class BarangMasukController extends Controller
         return view('admin.barangmasuk.edit', $context);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $barang_masuk = BarangMasuk::findOrFail($id);
-    
+
         $request->validate([
             'barang_id' => ['required'],
             'supplier_id' => ['required'],
             'jumlah' => ['required', 'integer'],
             'tanggal_masuk' => ['required', 'date'],
             'keterangan' => ['required'],
-        ], [
-            'barang_id.required' => 'Kategori Harus Diisi!',
-            'supplier_id.required' => 'Supplier Harus Diisi!',
-            'jumlah.required' => 'Jumlah Harus Diisi!',
-            'jumlah.integer' => 'Jumlah Harus Berupa Angka!',
-            'tanggal_masuk.required' => 'Tanggal Masuk Harus Diisi!',
-            'tanggal_masuk.date' => 'Tanggal Masuk Harus Berupa Tanggal!',
-            'keterangan.required' => 'Keterangan Harus Diisi!',
         ]);
-    
+
         $barang = Barang::findOrFail($request->barang_id);
-    
+
         $stok_lama = $barang_masuk->jumlah;
         $stok_baru = $request->jumlah;
         $barang->jumlah = $barang->jumlah - $stok_lama + $stok_baru;
         $barang->save();
-    
+
         $barang_masuk->update([
             'barang_id' => $request->barang_id,
             'supplier_id' => $request->supplier_id,
@@ -192,16 +173,24 @@ class BarangMasukController extends Controller
             'tanggal_masuk' => $request->tanggal_masuk,
             'keterangan' => $request->keterangan,
         ]);
-    
+
+        LogAktivitasHelper::catat(
+            'Update',
+            'Barang Masuk',
+            'Memperbarui data barang masuk: ' . $barang_masuk->barang->name_barang
+        );
+
         return redirect()->route('barang_masuk.index')->with('update', 'Barang Masuk Berhasil Di Update');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
+        $barangMasuk = BarangMasuk::find($id);
+        $namaBarang = $barangMasuk?->barang->name_barang ?? 'Tidak Diketahui';
+
         BarangMasuk::destroy($id);
+
+        LogAktivitasHelper::catat('Delete', 'Barang Masuk', 'Menghapus satu data barang masuk: ' . $namaBarang);
 
         return redirect()->route('barang_masuk.index')->with('delete', 'Barang Masuk Berhasil Dihapus');
     }
@@ -218,10 +207,6 @@ class BarangMasukController extends Controller
 
         $barang = Barang::find($request->barang_id);
         $supplier = Supplier::find($request->supplier_id);
-
-        if (!$barang || !$supplier) {
-            return redirect()->back()->with('error', 'Barang atau Supplier tidak ditemukan.');
-        }
 
         $cart = session()->get('cart', []);
 
@@ -269,6 +254,8 @@ class BarangMasukController extends Controller
 
         $barangMasuk->delete();
 
+        LogAktivitasHelper::catat('Delete', 'Barang Masuk', 'Membatalkan barang masuk: ' . $barangMasuk->barang->name_barang);
+
         return redirect()->back()->with('success', 'Barang berhasil dihapus dan jumlah telah diperbarui.');
     }
 
@@ -292,6 +279,8 @@ class BarangMasukController extends Controller
         }
 
         BarangMasuk::whereIn('id', $ids)->delete();
+
+        LogAktivitasHelper::catat('Delete', 'Barang Masuk', 'Membatalkan semua barang masuk sebanyak ' . count($ids) . ' item.');
 
         return redirect()->route('barang_masuk.index')->with('success', 'Semua barang dalam transaksi telah dihapus dan jumlah telah diperbarui.');
     }

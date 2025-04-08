@@ -29,47 +29,54 @@
 
     <div class="relative overflow-x-hidden mt-6 min-h-[550px]">
         <div class="w-full">
-            @foreach ($barang_masuks as $tanggal => $barang_list)
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-blue-600 mb-2">Tanggal Masuk: {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }}</h2>
-                    
-                    <table class="w-full table-auto bg-white shadow-lg rounded-lg">
-                        <thead class="bg-[#5CB8E4] text-white">
-                            <tr>
-                                <th class="px-4 py-2 text-left">No</th>
-                                <th class="px-4 py-2 text-left">Nama Barang</th>
-                                <th class="px-4 py-2 text-left">Jumlah</th>
-                                <th class="px-4 py-2 text-left">Keterangan</th>
-                                <th class="px-4 py-2 text-left">Nama Supplier</th>
-                                <th class="px-4 py-2 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($barang_list as $index => $barang_masuk)
-                                <tr class="border-t hover:bg-[#f1f1f1]">
-                                    <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                    <td class="px-4 py-2">{{ $barang_masuk->barang->name_barang ?? 'Data tidak tersedia' }}</td>
-                                    <td class="px-4 py-2">{{ $barang_masuk->jumlah }}</td>
-                                    <td class="px-4 py-2 text-[12px]">{{ $barang_masuk->keterangan }}</td>
-                                    <td class="px-4 py-2">{{ $barang_masuk->supplier->name_supplier ?? 'Tidak ada supplier' }}</td>
-                                    <td class="px-4 py-2 text-center">
-                                        <a href="{{ route('barang_masuk.edit', $barang_masuk->id) }}" class="bg-[#5CB8E4] hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition">
-                                            Update
-                                        </a>
-                                        <form action="{{ route('barang_masuk.destroy', $barang_masuk->id) }}" method="post" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus {{ $barang_masuk->barang->name_barang }}?')">
-                                            @csrf
-                                            @method('delete')
-                                            <button type="submit" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition ml-2">
-                                                Delete
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            @if(count($barang_masuks) === 0)
+                <div class="text-center text-gray-500 py-10 bg-white rounded-lg shadow">
+                    <p class="text-lg font-semibold">Daftar Barang Masuk Belum Ada</p>
+                    <p class="text-sm">Silakan tambahkan data terlebih dahulu.</p>
                 </div>
-            @endforeach
+            @else
+                @foreach ($barang_masuks as $tanggal => $barang_list)
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-blue-600 mb-2">Tanggal Masuk: {{ \Carbon\Carbon::parse($tanggal)->format('d M Y') }}</h2>
+                        
+                        <table class="w-full table-auto bg-white shadow-lg rounded-lg">
+                            <thead class="bg-[#5CB8E4] text-white">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">No</th>
+                                    <th class="px-4 py-2 text-left">Nama Barang</th>
+                                    <th class="px-4 py-2 text-left">Jumlah</th>
+                                    <th class="px-4 py-2 text-left">Keterangan</th>
+                                    <th class="px-4 py-2 text-left">Nama Supplier</th>
+                                    <th class="px-4 py-2 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($barang_list as $index => $barang_masuk)
+                                    <tr class="border-t hover:bg-[#f1f1f1]">
+                                        <td class="px-4 py-2">{{ $index + 1 }}</td>
+                                        <td class="px-4 py-2">{{ $barang_masuk->barang->name_barang ?? 'Data tidak tersedia' }}</td>
+                                        <td class="px-4 py-2">{{ $barang_masuk->jumlah }}</td>
+                                        <td class="px-4 py-2 text-[12px]">{{ $barang_masuk->keterangan }}</td>
+                                        <td class="px-4 py-2">{{ $barang_masuk->supplier->name_supplier ?? 'Tidak ada supplier' }}</td>
+                                        <td class="px-4 py-2 text-center">
+                                            <a href="{{ route('barang_masuk.edit', $barang_masuk->id) }}" class="bg-[#5CB8E4] hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition">
+                                                Update
+                                            </a>
+                                            <form action="{{ route('barang_masuk.destroy', $barang_masuk->id) }}" method="post" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus {{ $barang_masuk->barang->name_barang }}?')">
+                                                @csrf
+                                                @method('delete')
+                                                <button type="submit" class="bg-red-500 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition ml-2">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endforeach
+            @endif
         </div>
     </div>
 

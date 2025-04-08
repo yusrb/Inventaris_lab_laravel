@@ -53,9 +53,36 @@
         </form>
 
         <p class="text-center text-gray-600 mt-4">Belum punya akun? 
-            <a href="{{ route('register.index') }}" class="text-primary font-semibold hover:underline">Register</a>
+            <a href="#" id="open-modal" class="text-primary font-semibold hover:underline">Hubungi Admin!</a>
         </p>
     </div>
+
+    <!-- Modal Hubungi Admin -->
+    <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white w-full max-w-lg rounded-lg shadow-lg p-6 relative">
+            <h2 class="text-2xl font-bold text-primary text-black mb-4">Hubungi Admin</h2>
+
+            <hr class="border-[1.5px] relative bottom-[10px]">
+
+            <button id="close-modal" class="absolute top-3 right-4 text-gray-700 text-xl hover:text-red-600">&times;</button>
+
+            @forelse($usersAdmin as $admin)
+            <div class="mb-3 border-b pb-3 flex items-center justify-between">
+                <div>
+                    <p class="text-gray-800 font-semibold">{{ $admin->name }}</p>
+                    <p class="text-sm text-gray-600">{{ $admin->email }}</p>
+                </div>
+                <a href="mailto:{{ $admin->email }}"
+                   class="text-sm bg-primary text-white px-3 py-1 rounded bg-sky-600 hover:bg-sky-700 ml-4">
+                    Hubungi
+                </a>
+            </div>
+        @empty
+            <p class="text-gray-600">Tidak ada admin yang terdaftar.</p>
+        @endforelse
+        </div>
+    </div>
+
     
     <p class="absolute bottom-4 right-4 text-sm text-gray-700">{{ $settings->name_website }} | {{ $settings->tagline }}</p>
 
@@ -87,6 +114,15 @@
                     easing: "easeOutExpo"
                 });
             }
+        });
+
+        document.getElementById("open-modal").addEventListener("click", function (e) {
+            e.preventDefault();
+            document.getElementById("admin-modal").classList.remove("hidden");
+        });
+
+        document.getElementById("close-modal").addEventListener("click", function () {
+            document.getElementById("admin-modal").classList.add("hidden");
         });
     </script>
 </body>

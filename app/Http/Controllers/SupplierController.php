@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Settings;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use App\Helpers\LogAktivitasHelper;
+use Illuminate\Support\Facades\Auth;
 
 class SupplierController extends Controller
 {
@@ -18,12 +20,11 @@ class SupplierController extends Controller
 
         $query = Supplier::query();
 
-        if ($request->has('supplier_search'))
-        {
+        if ($request->has('supplier_search')) {
             $search = $request->input('supplier_search');
             $query->where('name_supplier', 'LIKE', "%{$search}%")
-                 ->orWhere('kontak', 'LIKE', "%{$search}%")
-                 ->orWhere('alamat', 'LIKE', "%{$search}%");
+                ->orWhere('kontak', 'LIKE', "%{$search}%")
+                ->orWhere('alamat', 'LIKE', "%{$search}%");
         }
 
         $suppliers = $query->get();
@@ -77,6 +78,12 @@ class SupplierController extends Controller
             'alamat' => $request->alamat,
         ]);
 
+        LogAktivitasHelper::catat(
+            'create',
+            'Supplier',
+            'User ' . Auth::user()->username . ' menambahkan Supplier ' . $request->name_supplier
+        );
+
         return redirect()->route('supplier.index')->with('success', 'Supplier Berhasil Ditambah!');
     }
 
@@ -129,7 +136,6 @@ class SupplierController extends Controller
         $context = [
             'settings' => $settings,
             'page' => $page,
-
             'supplier' => $get_supplier,
         ];
 
@@ -155,12 +161,19 @@ class SupplierController extends Controller
         ]);
 
         $supplier = Supplier::findOrFail($id);
+        $old_name = $supplier->name_supplier;
 
         $supplier->name_supplier = $request->name_supplier;
         $supplier->kontak = $request->kontak;
         $supplier->alamat = $request->alamat;
 
         $supplier->save();
+
+        LogAktivitasHelper::catat(
+            'update',
+            'Supplier',
+            'User ' . Auth::user()->username . ' mengupdate Supplier dari "' . $old_name . '" menjadi "' . $supplier->name_supplier . '"'
+        );
 
         return redirect()->route('supplier.index')->with('update', 'Supplier Berhasil di Update!');
     }
@@ -170,7 +183,15 @@ class SupplierController extends Controller
      */
     public function destroy(string $id)
     {
-        Supplier::destroy($id);
+        $supplier = Supplier::findOrFail($id);
+        $deletedName = $supplier->name_supplier;
+        $supplier->delete();
+
+        LogAktivitasHelper::catat(
+            'delete',
+            'Supplier',
+            'User ' . Auth::user()->username . ' menghapus Supplier "' . $deletedName . '"'
+        );
 
         return redirect()->route('supplier.index')->with('delete', 'Supplier Berhasil di Delete!');
     }

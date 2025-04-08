@@ -6,6 +6,8 @@ use App\Models\Kategori;
 use App\Models\Settings;
 use Illuminate\Http\Request;
 use App\Models\Barang;
+use App\Helpers\LogAktivitasHelper;
+use Illuminate\Support\Facades\Auth;
 
 class KategoriController extends Controller
 {
@@ -30,7 +32,6 @@ class KategoriController extends Controller
         $context = [
             'settings' => $settings,
             'page' => $page,
-
             'kategoris' => $kategoris,
         ];
         return view('admin.kategori.index', $context);
@@ -63,9 +64,11 @@ class KategoriController extends Controller
             'name_kategori.unique' => 'Nama Kategori Sudah ada!',
         ]);
 
-        Kategori::create([
+        $kategori = Kategori::create([
             'name_kategori' => $request->name_kategori,
         ]);
+
+        LogAktivitasHelper::catat('create', 'Kategori', 'User ' . Auth::user()->username . ' menambahkan Kategori ' . $kategori->name_kategori);
 
         return redirect()->route('kategori.index')->with('success', 'Berhasil Menambah Kategori');
     }
@@ -73,7 +76,6 @@ class KategoriController extends Controller
     /**
      * Display the specified resource.
      */
-
     public function show(Request $request, string $id)
     {
         $get_all_barang_from_kategori = Kategori::with(['barangs' => function ($query) use ($request) {
@@ -109,7 +111,6 @@ class KategoriController extends Controller
         $context = [
             'settings' => $settings,
             'page' => $page,
-
             'kategori' => $get_kategori,
         ];
         
@@ -122,29 +123,39 @@ class KategoriController extends Controller
     public function update(Request $request, string $id)
     {
         $request->validate([
-            'name_kategori' => ['required', 'unique:kategoris,name_kategori'],
+            'name_kategori' => ['required', 'unique:kategoris,name_kategori,' . $id],
         ], [
             'name_kategori.required' => 'Nama Kategori Harus Diisi!',
             'name_kategori.unique' => 'Nama Kategori Sudah ada!',
         ]);
-
+    
         $kategori = Kategori::findOrFail($id);
-
+        $old_name = $kategori->name_kategori;
+    
         $kategori->name_kategori = $request->name_kategori;
-
         $kategori->save();
-
+    
+        LogAktivitasHelper::catat(
+            'update',
+            'Kategori',
+            'User ' . Auth::user()->username . ' mengupdate Kategori dari "' . $old_name . '" menjadi "' . $kategori->name_kategori . '"'
+        );
+    
         return redirect()->route('kategori.index')->with('update', 'Kategori Berhasil di Update!');
-
     }
+    
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        Kategori::destroy($id);
+        $kategori = Kategori::findOrFail($id);
 
-        return redirect()->route('kategori.index')->with('delete', 'Kategori Berhasil di Update!');
+        LogAktivitasHelper::catat('delete', 'Kategori', 'User ' . Auth::user()->username . ' menghapus Kategori ' . $kategori->name_kategori);
+
+        $kategori->delete();
+
+        return redirect()->route('kategori.index')->with('delete', 'Kategori Berhasil dihapus!');
     }
 }
